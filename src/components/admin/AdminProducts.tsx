@@ -186,6 +186,16 @@ function ProductEditor({ initial, categories, onClose, onSaved }: {
           <F label="Фото обложки">
             <ImageUpload value={form.cover_url ?? ""} onChange={(url) => setForm({ ...form, cover_url: url })} />
           </F>
+          {!isNew && initial.id && (
+            <F label="Галерея (дополнительные фото)">
+              <GalleryEditor productId={initial.id} />
+            </F>
+          )}
+          {isNew && (
+            <p className="text-xs text-muted-foreground">
+              После сохранения товара появится возможность добавить галерею фото.
+            </p>
+          )}
           <F label="Краткое описание"><input value={form.short_description ?? ""} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className={inp} /></F>
           <F label="Описание"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={5} className={inp} /></F>
           <div className="grid gap-4 sm:grid-cols-3">
