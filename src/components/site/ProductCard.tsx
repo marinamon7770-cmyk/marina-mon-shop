@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, normalizeImageUrl } from "@/lib/format";
 
 export type ProductCardData = {
   id: string;
