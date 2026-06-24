@@ -6,7 +6,7 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { QuestionForm } from "@/components/site/QuestionForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/lib/cart";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, normalizeImageUrl } from "@/lib/format";
 
 export const Route = createFileRoute("/product/$slug")({
   head: ({ params }) => ({
