@@ -29,13 +29,27 @@ export const Route = createFileRoute("/")({
 });
 
 const COLLECTIONS = [
-  { slug: "bags", title: "Сумки", img: bagsImg, sub: "плетёное с кожей" },
-  { slug: "storage", title: "Системы хранения", img: storageImg, sub: "для дома и быта" },
-  { slug: "baskets", title: "Корзины", img: basketsImg, sub: "для пикника и декора" },
-  { slug: "leather", title: "Кожа", img: leatherImg, sub: "ремни и аксессуары" },
+  { slug: "bags", title: "Сумки", key: "home_collection_bags", img: bagsImg, sub: "плетёное с кожей" },
+  { slug: "storage", title: "Системы хранения", key: "home_collection_storage", img: storageImg, sub: "для дома и быта" },
+  { slug: "baskets", title: "Корзины", key: "home_collection_baskets", img: basketsImg, sub: "для пикника и декора" },
+  { slug: "leather", title: "Кожа", key: "home_collection_leather", img: leatherImg, sub: "ремни и аксессуары" },
 ];
 
 function Home() {
+  const settings = useQuery({
+    queryKey: ["home-settings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["home_hero", ...COLLECTIONS.map((c) => c.key)]);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((r: any) => { if (r.value) map[r.key] = r.value; });
+      return map;
+    },
+  });
+  const heroSrc = settings.data?.home_hero || heroImg;
+
   const featured = useQuery({
     queryKey: ["featured-products"],
     queryFn: async () => {
@@ -88,11 +102,9 @@ function Home() {
           <div className="relative lg:col-span-6">
             <div className="aspect-[4/5] overflow-hidden">
               <img
-                src={heroImg}
+                src={heroSrc}
                 alt="Руки мастера плетут корзину"
                 className="h-full w-full object-cover"
-                width={1536}
-                height={1024}
               />
             </div>
             <div className="absolute -bottom-6 -left-6 hidden bg-background p-6 shadow-[var(--shadow-warm)] sm:block lg:-left-12">
@@ -148,7 +160,7 @@ function Home() {
             >
               <div className="aspect-[3/4] overflow-hidden">
                 <img
-                  src={c.img}
+                  src={settings.data?.[c.key] || c.img}
                   alt={c.title}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
