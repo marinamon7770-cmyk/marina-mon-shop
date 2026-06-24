@@ -96,18 +96,36 @@ export function AdminProducts() {
           initial={editing}
           categories={cats.data ?? []}
           onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); }}
+          onSaved={(keepOpen, saved) => {
+            qc.invalidateQueries({ queryKey: ["admin-products"] });
+            if (keepOpen && saved) setEditing(saved);
+            else setEditing(null);
+          }}
         />
       )}
     </div>
   );
 }
 
+const SIGNED_TTL = 60 * 60 * 24 * 365 * 10; // 10 years
+
+async function uploadToBucket(file: File, folder: string): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const up = await supabase.storage.from("product-images").upload(path, file, {
+    cacheControl: "31536000", upsert: false, contentType: file.type,
+  });
+  if (up.error) throw up.error;
+  const signed = await supabase.storage.from("product-images").createSignedUrl(path, SIGNED_TTL);
+  if (signed.error) throw signed.error;
+  return signed.data.signedUrl;
+}
+
 function ProductEditor({ initial, categories, onClose, onSaved }: {
   initial: Partial<Product>;
   categories: Category[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (keepOpen?: boolean, saved?: Partial<Product>) => void;
 }) {
   const [form, setForm] = useState<Partial<Product>>(initial);
   const [busy, setBusy] = useState(false);
@@ -133,12 +151,13 @@ function ProductEditor({ initial, categories, onClose, onSaved }: {
     };
     setBusy(true);
     const res = isNew
-      ? await supabase.from("products").insert(payload)
-      : await supabase.from("products").update(payload).eq("id", initial.id!);
+      ? await supabase.from("products").insert(payload).select().single()
+      : await supabase.from("products").update(payload).eq("id", initial.id!).select().single();
     setBusy(false);
     if (res.error) return toast.error(res.error.message);
-    toast.success(isNew ? "Товар создан" : "Сохранено");
-    onSaved();
+    toast.success(isNew ? "Товар создан — теперь можно добавить фото галереи" : "Сохранено");
+    if (isNew) onSaved(true, res.data as Product);
+    else onSaved(false);
   }
 
   return (
