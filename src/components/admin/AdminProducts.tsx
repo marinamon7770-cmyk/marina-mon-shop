@@ -96,18 +96,36 @@ export function AdminProducts() {
           initial={editing}
           categories={cats.data ?? []}
           onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); }}
+          onSaved={(keepOpen, saved) => {
+            qc.invalidateQueries({ queryKey: ["admin-products"] });
+            if (keepOpen && saved) setEditing(saved);
+            else setEditing(null);
+          }}
         />
       )}
     </div>
   );
 }
 
+const SIGNED_TTL = 60 * 60 * 24 * 365 * 10; // 10 years
+
+async function uploadToBucket(file: File, folder: string): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const up = await supabase.storage.from("product-images").upload(path, file, {
+    cacheControl: "31536000", upsert: false, contentType: file.type,
+  });
+  if (up.error) throw up.error;
+  const signed = await supabase.storage.from("product-images").createSignedUrl(path, SIGNED_TTL);
+  if (signed.error) throw signed.error;
+  return signed.data.signedUrl;
+}
+
 function ProductEditor({ initial, categories, onClose, onSaved }: {
   initial: Partial<Product>;
   categories: Category[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (keepOpen?: boolean, saved?: Partial<Product>) => void;
 }) {
   const [form, setForm] = useState<Partial<Product>>(initial);
   const [busy, setBusy] = useState(false);
@@ -133,12 +151,13 @@ function ProductEditor({ initial, categories, onClose, onSaved }: {
     };
     setBusy(true);
     const res = isNew
-      ? await supabase.from("products").insert(payload)
-      : await supabase.from("products").update(payload).eq("id", initial.id!);
+      ? await supabase.from("products").insert(payload).select().single()
+      : await supabase.from("products").update(payload).eq("id", initial.id!).select().single();
     setBusy(false);
     if (res.error) return toast.error(res.error.message);
-    toast.success(isNew ? "Товар создан" : "Сохранено");
-    onSaved();
+    toast.success(isNew ? "Товар создан — теперь можно добавить фото галереи" : "Сохранено");
+    if (isNew) onSaved(true, res.data as Product);
+    else onSaved(false);
   }
 
   return (
@@ -167,6 +186,16 @@ function ProductEditor({ initial, categories, onClose, onSaved }: {
           <F label="Фото обложки">
             <ImageUpload value={form.cover_url ?? ""} onChange={(url) => setForm({ ...form, cover_url: url })} />
           </F>
+          {!isNew && initial.id && (
+            <F label="Галерея (дополнительные фото)">
+              <GalleryEditor productId={initial.id} />
+            </F>
+          )}
+          {isNew && (
+            <p className="text-xs text-muted-foreground">
+              После сохранения товара появится возможность добавить галерею фото.
+            </p>
+          )}
           <F label="Краткое описание"><input value={form.short_description ?? ""} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className={inp} /></F>
           <F label="Описание"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={5} className={inp} /></F>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -215,18 +244,15 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
     if (!file.type.startsWith("image/")) return toast.error("Можно загрузить только изображение");
     if (file.size > 8 * 1024 * 1024) return toast.error("Файл больше 8 МБ");
     setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(path, file, {
-      cacheControl: "31536000",
-      upsert: false,
-      contentType: file.type,
-    });
-    setUploading(false);
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-    onChange(data.publicUrl);
-    toast.success("Фото загружено");
+    try {
+      const url = await uploadToBucket(file, "covers");
+      onChange(url);
+      toast.success("Фото загружено");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Ошибка загрузки");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -263,6 +289,114 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
           >
             Удалить
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type GalleryImage = { id: string; url: string; alt: string | null; sort_order: number };
+
+function GalleryEditor({ productId }: { productId: string }) {
+  const qc = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const imagesQ = useQuery({
+    queryKey: ["product-images", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_images")
+        .select("id, url, alt, sort_order")
+        .eq("product_id", productId)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as GalleryImage[];
+    },
+  });
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const base = imagesQ.data?.length ?? 0;
+    let i = 0;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) { toast.error(`${file.name}: не изображение`); continue; }
+      if (file.size > 8 * 1024 * 1024) { toast.error(`${file.name}: больше 8 МБ`); continue; }
+      try {
+        const url = await uploadToBucket(file, `gallery/${productId}`);
+        const { error } = await supabase.from("product_images").insert({
+          product_id: productId, url, alt: null, sort_order: base + i,
+        });
+        if (error) throw error;
+        i++;
+      } catch (e: any) {
+        toast.error(e?.message ?? "Ошибка загрузки");
+      }
+    }
+    setUploading(false);
+    qc.invalidateQueries({ queryKey: ["product-images", productId] });
+    if (i > 0) toast.success(`Загружено фото: ${i}`);
+  }
+
+  async function removeImage(id: string) {
+    if (!confirm("Удалить фото?")) return;
+    const { error } = await supabase.from("product_images").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["product-images", productId] });
+  }
+
+  async function move(id: string, dir: -1 | 1) {
+    const list = imagesQ.data ?? [];
+    const idx = list.findIndex((x) => x.id === id);
+    const swap = idx + dir;
+    if (idx < 0 || swap < 0 || swap >= list.length) return;
+    const a = list[idx], b = list[swap];
+    await supabase.from("product_images").update({ sort_order: b.sort_order }).eq("id", a.id);
+    await supabase.from("product_images").update({ sort_order: a.sort_order }).eq("id", b.id);
+    qc.invalidateQueries({ queryKey: ["product-images", productId] });
+  }
+
+  return (
+    <div className="space-y-3">
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current?.click()}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-4 py-6 text-center text-xs transition ${
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-secondary/20 hover:border-foreground/40"
+        }`}
+      >
+        <Upload className="h-5 w-5 text-muted-foreground" />
+        <div className="text-muted-foreground">
+          {uploading ? "Загрузка…" : "Перетащите несколько фото или нажмите, чтобы выбрать"}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => { handleFiles(e.target.files); if (inputRef.current) inputRef.current.value = ""; }}
+        />
+      </div>
+
+      {imagesQ.data && imagesQ.data.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {imagesQ.data.map((img, i) => (
+            <div key={img.id} className="group relative border border-border">
+              <img src={img.url} alt="" className="aspect-square w-full object-cover" />
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/90 px-1 py-1 text-[10px]">
+                <button type="button" onClick={() => move(img.id, -1)} disabled={i === 0} className="px-1 disabled:opacity-30">←</button>
+                <button type="button" onClick={() => removeImage(img.id)} className="px-1 text-destructive">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+                <button type="button" onClick={() => move(img.id, 1)} disabled={i === (imagesQ.data?.length ?? 0) - 1} className="px-1 disabled:opacity-30">→</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
