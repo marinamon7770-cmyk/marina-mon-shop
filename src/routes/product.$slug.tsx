@@ -96,7 +96,7 @@ function ProductPage() {
           <div>
             <div className="aspect-square overflow-hidden bg-[var(--sand)]/60">
               {images[active] ? (
-                <img src={images[active].url} alt={images[active].alt ?? p.name} className="h-full w-full object-cover" />
+                <img src={normalizeImageUrl(images[active].url)} alt={images[active].alt ?? p.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center font-display text-6xl italic text-muted-foreground/60">M.M.</div>
               )}
@@ -109,7 +109,7 @@ function ProductPage() {
                     onClick={() => setActive(i)}
                     className={`aspect-square overflow-hidden border ${i === active ? "border-primary" : "border-transparent"}`}
                   >
-                    <img src={img.url} alt="" className="h-full w-full object-cover" />
+                    <img src={normalizeImageUrl(img.url)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
