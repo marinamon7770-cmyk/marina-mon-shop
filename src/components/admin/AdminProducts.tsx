@@ -244,18 +244,15 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
     if (!file.type.startsWith("image/")) return toast.error("Можно загрузить только изображение");
     if (file.size > 8 * 1024 * 1024) return toast.error("Файл больше 8 МБ");
     setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(path, file, {
-      cacheControl: "31536000",
-      upsert: false,
-      contentType: file.type,
-    });
-    setUploading(false);
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-    onChange(data.publicUrl);
-    toast.success("Фото загружено");
+    try {
+      const url = await uploadToBucket(file, "covers");
+      onChange(url);
+      toast.success("Фото загружено");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Ошибка загрузки");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
