@@ -88,6 +88,7 @@ function AdminPage() {
             ["orders", "Заявки"],
             ["questions", "Вопросы"],
             ["products", "Товары"],
+            ["home", "Главная"],
           ] as [Tab, string][]).map(([k, label]) => (
             <button
               key={k}
@@ -105,6 +106,7 @@ function AdminPage() {
           {tab === "orders" && <AdminOrders />}
           {tab === "questions" && <AdminQuestions />}
           {tab === "products" && <AdminProducts />}
+          {tab === "home" && <AdminHome />}
         </div>
       </div>
     </SiteLayout>
