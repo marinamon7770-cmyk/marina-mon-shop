@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice, slugify } from "@/lib/format";
 import { Empty } from "./AdminOrders";
@@ -164,8 +164,9 @@ function ProductEditor({ initial, categories, onClose, onSaved }: {
               </select>
             </F>
           </div>
-          <F label="URL обложки"><input value={form.cover_url ?? ""} onChange={(e) => setForm({ ...form, cover_url: e.target.value })} placeholder="https://..." className={inp} /></F>
-          {form.cover_url && <img src={form.cover_url} alt="" className="h-32 w-32 object-cover border border-border" />}
+          <F label="Фото обложки">
+            <ImageUpload value={form.cover_url ?? ""} onChange={(url) => setForm({ ...form, cover_url: url })} />
+          </F>
           <F label="Краткое описание"><input value={form.short_description ?? ""} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className={inp} /></F>
           <F label="Описание"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={5} className={inp} /></F>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -199,6 +200,71 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
     <div>
       <label className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast.error("Можно загрузить только изображение");
+    if (file.size > 8 * 1024 * 1024) return toast.error("Файл больше 8 МБ");
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: file.type,
+    });
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    onChange(data.publicUrl);
+    toast.success("Фото загружено");
+  }
+
+  return (
+    <div className="space-y-3">
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current?.click()}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-4 py-8 text-center text-xs transition ${
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-secondary/20 hover:border-foreground/40"
+        }`}
+      >
+        <Upload className="h-5 w-5 text-muted-foreground" />
+        <div className="text-muted-foreground">
+          {uploading ? "Загрузка…" : "Перетащите фото сюда или нажмите, чтобы выбрать"}
+        </div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70">JPG · PNG · WEBP · до 8 МБ</div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </div>
+      {value && (
+        <div className="flex items-start gap-3">
+          <img src={value} alt="" className="h-24 w-24 border border-border object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="text-xs uppercase tracking-widest text-muted-foreground hover:text-destructive"
+          >
+            Удалить
+          </button>
+        </div>
+      )}
     </div>
   );
 }
