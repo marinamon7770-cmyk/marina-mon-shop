@@ -84,13 +84,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Авторские плетёные сумки, корзины, системы хранения и изделия из кожи ручной работы. Мастерская Марины Моненок, Тольятти.",
       },
-      { property: "og:title", content: "Мастерская Марины Моненок" },
+      { property: "og:title", content: "Мастерская Марины Моненок — плетёные изделия и кожа, Тольятти" },
       {
         property: "og:description",
         content: "Плетёные изделия и кожа ручной работы. Тольятти.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Мастерская Марины Моненок — плетёные изделия и кожа, Тольятти" },
+      { name: "description", content: "Плетеные сумки и плетеные системы хранения для дома. Изделия из натуральной кожи." },
+      { property: "og:description", content: "Плетеные сумки и плетеные системы хранения для дома. Изделия из натуральной кожи." },
+      { name: "twitter:description", content: "Плетеные сумки и плетеные системы хранения для дома. Изделия из натуральной кожи." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f12aa2da-f912-4f8a-a6f7-0cf21bd4d283/id-preview-2f72d265--0c734592-ada8-46c0-8f40-745b25b8a9c5.lovable.app-1782323100957.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f12aa2da-f912-4f8a-a6f7-0cf21bd4d283/id-preview-2f72d265--0c734592-ada8-46c0-8f40-745b25b8a9c5.lovable.app-1782323100957.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
