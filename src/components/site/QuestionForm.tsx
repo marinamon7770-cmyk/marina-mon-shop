@@ -20,6 +20,22 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
       toast.error("Заполните имя и сообщение");
       return;
     }
+    if (payload.name.length > 200) {
+      toast.error("Имя слишком длинное (макс. 200 символов)");
+      return;
+    }
+    if (payload.message.length > 5000) {
+      toast.error("Сообщение слишком длинное (макс. 5000 символов)");
+      return;
+    }
+    if (payload.email && payload.email.length > 254) {
+      toast.error("Email слишком длинный");
+      return;
+    }
+    if (payload.phone && payload.phone.length > 40) {
+      toast.error("Телефон слишком длинный");
+      return;
+    }
     setSending(true);
     const { error } = await supabase.from("questions").insert(payload);
     setSending(false);
@@ -59,6 +75,7 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
           name="message"
           required
           rows={5}
+          maxLength={5000}
           className="w-full border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground"
           placeholder={
             productSlug
@@ -81,6 +98,7 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
 function Field({
   name, label, type = "text", required,
 }: { name: string; label: string; type?: string; required?: boolean }) {
+  const maxLength = name === "message" ? 5000 : name === "email" ? 254 : name === "phone" ? 40 : 200;
   return (
     <div>
       <label className="mb-1.5 block text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -90,6 +108,7 @@ function Field({
         name={name}
         type={type}
         required={required}
+        maxLength={maxLength}
         className="w-full border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground"
       />
     </div>

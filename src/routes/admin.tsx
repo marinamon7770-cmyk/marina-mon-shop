@@ -209,7 +209,7 @@ function LoginForm() {
       <p className="tag-label">вход в админку</p>
       <h1 className="font-display mt-6 text-4xl">{mode === "login" ? "Войти" : "Регистрация"}</h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        Учётная запись marinamon7770@gmail.com автоматически получит права администратора при первой регистрации.
+        Войдите учётной записью владельца магазина.
       </p>
       <form onSubmit={onSubmit} className="mt-10 space-y-4">
         <div>
