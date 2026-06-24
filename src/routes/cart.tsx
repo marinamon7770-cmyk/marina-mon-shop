@@ -41,7 +41,12 @@ function CartPage() {
     }).select().single();
     if (error || !order) {
       setSending(false);
-      toast.error("Не получилось отправить заказ. Попробуйте ещё раз.");
+      const reason = error?.message?.includes("row-level security")
+        ? "Сервер отклонил заказ из-за ограничений доступа. Мы уже работаем над этим — напишите Марине напрямую."
+        : error?.message?.includes("Failed to fetch") || error?.message?.includes("NetworkError")
+        ? "Нет связи с сервером. Проверьте интернет и попробуйте снова."
+        : error?.message || "Неизвестная ошибка";
+      toast.error("Не получилось отправить заказ", { description: reason, duration: 8000 });
       return;
     }
     const itemsErr = await supabase.from("order_items").insert(
