@@ -164,8 +164,9 @@ function ProductEditor({ initial, categories, onClose, onSaved }: {
               </select>
             </F>
           </div>
-          <F label="URL обложки"><input value={form.cover_url ?? ""} onChange={(e) => setForm({ ...form, cover_url: e.target.value })} placeholder="https://..." className={inp} /></F>
-          {form.cover_url && <img src={form.cover_url} alt="" className="h-32 w-32 object-cover border border-border" />}
+          <F label="Фото обложки">
+            <ImageUpload value={form.cover_url ?? ""} onChange={(url) => setForm({ ...form, cover_url: url })} />
+          </F>
           <F label="Краткое описание"><input value={form.short_description ?? ""} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className={inp} /></F>
           <F label="Описание"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={5} className={inp} /></F>
           <div className="grid gap-4 sm:grid-cols-3">
