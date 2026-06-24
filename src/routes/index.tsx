@@ -29,13 +29,27 @@ export const Route = createFileRoute("/")({
 });
 
 const COLLECTIONS = [
-  { slug: "bags", title: "Сумки", img: bagsImg, sub: "плетёное с кожей" },
-  { slug: "storage", title: "Системы хранения", img: storageImg, sub: "для дома и быта" },
-  { slug: "baskets", title: "Корзины", img: basketsImg, sub: "для пикника и декора" },
-  { slug: "leather", title: "Кожа", img: leatherImg, sub: "ремни и аксессуары" },
+  { slug: "bags", title: "Сумки", key: "home_collection_bags", img: bagsImg, sub: "плетёное с кожей" },
+  { slug: "storage", title: "Системы хранения", key: "home_collection_storage", img: storageImg, sub: "для дома и быта" },
+  { slug: "baskets", title: "Корзины", key: "home_collection_baskets", img: basketsImg, sub: "для пикника и декора" },
+  { slug: "leather", title: "Кожа", key: "home_collection_leather", img: leatherImg, sub: "ремни и аксессуары" },
 ];
 
 function Home() {
+  const settings = useQuery({
+    queryKey: ["home-settings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["home_hero", ...COLLECTIONS.map((c) => c.key)]);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((r: any) => { if (r.value) map[r.key] = r.value; });
+      return map;
+    },
+  });
+  const heroSrc = settings.data?.home_hero || heroImg;
+
   const featured = useQuery({
     queryKey: ["featured-products"],
     queryFn: async () => {
