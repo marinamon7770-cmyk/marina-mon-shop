@@ -233,6 +233,8 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
   );
 }
 
+export { uploadToBucket, ImageUpload };
+
 function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
