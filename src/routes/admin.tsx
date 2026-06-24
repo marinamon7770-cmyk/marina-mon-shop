@@ -8,6 +8,7 @@ import type { Session } from "@supabase/supabase-js";
 import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminProducts } from "@/components/admin/AdminProducts";
+import { AdminHome } from "@/components/admin/AdminHome";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
