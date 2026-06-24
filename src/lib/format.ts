@@ -24,3 +24,32 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 }
+
+/**
+ * Преобразует ссылки Google Drive в прямые URL изображений.
+ * Поддерживает форматы:
+ *  - https://drive.google.com/file/d/<ID>/view?...
+ *  - https://drive.google.com/open?id=<ID>
+ *  - https://drive.google.com/uc?id=<ID>&export=...
+ * Возвращает URL вида https://lh3.googleusercontent.com/d/<ID>=w1200,
+ * который надёжно работает для hotlink'а в <img>.
+ */
+export function normalizeImageUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  const u = url.trim();
+  if (!u) return "";
+
+  // /file/d/<ID>/
+  const m1 = u.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]{20,})/);
+  if (m1) return `https://lh3.googleusercontent.com/d/${m1[1]}=w1600`;
+
+  // ?id=<ID> или &id=<ID>
+  const m2 = u.match(/drive\.google\.com\/[^?]*\?(?:.*&)?id=([a-zA-Z0-9_-]{20,})/);
+  if (m2) return `https://lh3.googleusercontent.com/d/${m2[1]}=w1600`;
+
+  // открытая ссылка вида https://drive.google.com/open?id=...
+  const m3 = u.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
+  if (m3 && u.includes("google")) return `https://lh3.googleusercontent.com/d/${m3[1]}=w1600`;
+
+  return u;
+}
