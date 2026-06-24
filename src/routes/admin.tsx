@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { LogOut, Mail, Lock } from "lucide-react";
+import { LogOut, Mail, Lock, Bell } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
@@ -26,6 +26,9 @@ function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("orders");
+  const [newOrders, setNewOrders] = useState(0);
+  const [newQuestions, setNewQuestions] = useState(0);
+  const initialized = useRef(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -43,6 +46,42 @@ function AdminPage() {
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
   }, [session]);
+
+  // Подсчёт новых заявок/вопросов + realtime-уведомления
+  useEffect(() => {
+    if (!isAdmin) return;
+    const refresh = async () => {
+      const [o, q] = await Promise.all([
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("questions").select("id", { count: "exact", head: true }).eq("status", "new"),
+      ]);
+      setNewOrders(o.count ?? 0);
+      setNewQuestions(q.count ?? 0);
+      initialized.current = true;
+    };
+    refresh();
+    const channel = supabase
+      .channel("admin-notifications")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        setNewOrders((n) => n + 1);
+        if (initialized.current) {
+          const name = (payload.new as { customer_name?: string })?.customer_name ?? "клиент";
+          toast.success("Новая заявка!", { description: `${name} оформил(а) заказ`, duration: 10000 });
+          try { new Audio("data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=").play().catch(() => {}); } catch {}
+        }
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "questions" }, (payload) => {
+        setNewQuestions((n) => n + 1);
+        if (initialized.current) {
+          const name = (payload.new as { name?: string })?.name ?? "посетитель";
+          toast("Новый вопрос", { description: `${name} задал(а) вопрос`, duration: 10000 });
+        }
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, refresh)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "questions" }, refresh)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
 
   if (!session) return <SiteLayout><LoginForm /></SiteLayout>;
 
@@ -83,21 +122,43 @@ function AdminPage() {
           </button>
         </div>
 
+        {(newOrders > 0 || newQuestions > 0) && (
+          <div className="mt-8 flex flex-wrap items-center gap-3 border border-primary/30 bg-primary/5 px-5 py-4 text-sm">
+            <Bell className="h-4 w-4 text-primary" />
+            <span className="font-medium">Новое:</span>
+            {newOrders > 0 && (
+              <button onClick={() => setTab("orders")} className="underline-offset-2 hover:underline">
+                {newOrders} {newOrders === 1 ? "заявка" : newOrders < 5 ? "заявки" : "заявок"}
+              </button>
+            )}
+            {newQuestions > 0 && (
+              <button onClick={() => setTab("questions")} className="underline-offset-2 hover:underline">
+                {newQuestions} {newQuestions === 1 ? "вопрос" : newQuestions < 5 ? "вопроса" : "вопросов"}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="mt-10 flex flex-wrap gap-2 border-b border-border">
           {([
-            ["orders", "Заявки"],
-            ["questions", "Вопросы"],
-            ["products", "Товары"],
-            ["home", "Главная"],
-          ] as [Tab, string][]).map(([k, label]) => (
+            ["orders", "Заявки", newOrders],
+            ["questions", "Вопросы", newQuestions],
+            ["products", "Товары", 0],
+            ["home", "Главная", 0],
+          ] as [Tab, string, number][]).map(([k, label, count]) => (
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`-mb-px border-b-2 px-5 py-3 text-xs uppercase tracking-[0.2em] ${
+              className={`-mb-px inline-flex items-center gap-2 border-b-2 px-5 py-3 text-xs uppercase tracking-[0.2em] ${
                 tab === k ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
+              {count > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                  {count}
+                </span>
+              )}
             </button>
           ))}
         </div>
