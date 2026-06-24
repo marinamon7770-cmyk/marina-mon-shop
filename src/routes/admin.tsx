@@ -26,6 +26,9 @@ function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("orders");
+  const [newOrders, setNewOrders] = useState(0);
+  const [newQuestions, setNewQuestions] = useState(0);
+  const initialized = useRef(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -43,6 +46,42 @@ function AdminPage() {
       .maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
   }, [session]);
+
+  // Подсчёт новых заявок/вопросов + realtime-уведомления
+  useEffect(() => {
+    if (!isAdmin) return;
+    const refresh = async () => {
+      const [o, q] = await Promise.all([
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("questions").select("id", { count: "exact", head: true }).eq("status", "new"),
+      ]);
+      setNewOrders(o.count ?? 0);
+      setNewQuestions(q.count ?? 0);
+      initialized.current = true;
+    };
+    refresh();
+    const channel = supabase
+      .channel("admin-notifications")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        setNewOrders((n) => n + 1);
+        if (initialized.current) {
+          const name = (payload.new as { customer_name?: string })?.customer_name ?? "клиент";
+          toast.success("Новая заявка!", { description: `${name} оформил(а) заказ`, duration: 10000 });
+          try { new Audio("data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=").play().catch(() => {}); } catch {}
+        }
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "questions" }, (payload) => {
+        setNewQuestions((n) => n + 1);
+        if (initialized.current) {
+          const name = (payload.new as { name?: string })?.name ?? "посетитель";
+          toast("Новый вопрос", { description: `${name} задал(а) вопрос`, duration: 10000 });
+        }
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, refresh)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "questions" }, refresh)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
 
   if (!session) return <SiteLayout><LoginForm /></SiteLayout>;
 
