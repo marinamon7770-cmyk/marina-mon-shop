@@ -102,7 +102,6 @@ function Home() {
           <div className="relative lg:col-span-6">
             <div className="aspect-[4/5] overflow-hidden">
               <img
-              <img
                 src={heroSrc}
                 alt="Руки мастера плетут корзину"
                 className="h-full w-full object-cover"
