@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "orders" | "questions" | "products";
+type Tab = "orders" | "questions" | "products" | "home";
 
 function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
