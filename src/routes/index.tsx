@@ -160,7 +160,7 @@ function Home() {
             >
               <div className="aspect-[3/4] overflow-hidden">
                 <img
-                  src={c.img}
+                  src={settings.data?.[c.key] || c.img}
                   alt={c.title}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
