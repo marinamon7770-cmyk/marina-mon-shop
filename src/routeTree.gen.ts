@@ -9,38 +9,217 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OfferRouteImport } from './routes/offer'
+import { Route as DeliveryRouteImport } from './routes/delivery'
+import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CatalogIndexRouteImport } from './routes/catalog.index'
+import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as CatalogCategoryRouteImport } from './routes/catalog.$category'
 
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfferRoute = OfferRouteImport.update({
+  id: '/offer',
+  path: '/offer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeliveryRoute = DeliveryRouteImport.update({
+  id: '/delivery',
+  path: '/delivery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CatalogIndexRoute = CatalogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CatalogRoute,
+} as any)
+const ProductSlugRoute = ProductSlugRouteImport.update({
+  id: '/product/$slug',
+  path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogCategoryRoute = CatalogCategoryRouteImport.update({
+  id: '/$category',
+  path: '/$category',
+  getParentRoute: () => CatalogRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/cart': typeof CartRoute
+  '/catalog': typeof CatalogRouteWithChildren
+  '/contacts': typeof ContactsRoute
+  '/delivery': typeof DeliveryRoute
+  '/offer': typeof OfferRoute
+  '/privacy': typeof PrivacyRoute
+  '/catalog/$category': typeof CatalogCategoryRoute
+  '/product/$slug': typeof ProductSlugRoute
+  '/catalog/': typeof CatalogIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/cart': typeof CartRoute
+  '/contacts': typeof ContactsRoute
+  '/delivery': typeof DeliveryRoute
+  '/offer': typeof OfferRoute
+  '/privacy': typeof PrivacyRoute
+  '/catalog/$category': typeof CatalogCategoryRoute
+  '/product/$slug': typeof ProductSlugRoute
+  '/catalog': typeof CatalogIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/cart': typeof CartRoute
+  '/catalog': typeof CatalogRouteWithChildren
+  '/contacts': typeof ContactsRoute
+  '/delivery': typeof DeliveryRoute
+  '/offer': typeof OfferRoute
+  '/privacy': typeof PrivacyRoute
+  '/catalog/$category': typeof CatalogCategoryRoute
+  '/product/$slug': typeof ProductSlugRoute
+  '/catalog/': typeof CatalogIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/cart'
+    | '/catalog'
+    | '/contacts'
+    | '/delivery'
+    | '/offer'
+    | '/privacy'
+    | '/catalog/$category'
+    | '/product/$slug'
+    | '/catalog/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/cart'
+    | '/contacts'
+    | '/delivery'
+    | '/offer'
+    | '/privacy'
+    | '/catalog/$category'
+    | '/product/$slug'
+    | '/catalog'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/cart'
+    | '/catalog'
+    | '/contacts'
+    | '/delivery'
+    | '/offer'
+    | '/privacy'
+    | '/catalog/$category'
+    | '/product/$slug'
+    | '/catalog/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  CartRoute: typeof CartRoute
+  CatalogRoute: typeof CatalogRouteWithChildren
+  ContactsRoute: typeof ContactsRoute
+  DeliveryRoute: typeof DeliveryRoute
+  OfferRoute: typeof OfferRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProductSlugRoute: typeof ProductSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offer': {
+      id: '/offer'
+      path: '/offer'
+      fullPath: '/offer'
+      preLoaderRoute: typeof OfferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delivery': {
+      id: '/delivery'
+      path: '/delivery'
+      fullPath: '/delivery'
+      preLoaderRoute: typeof DeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +227,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/catalog/': {
+      id: '/catalog/'
+      path: '/'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof CatalogIndexRouteImport
+      parentRoute: typeof CatalogRoute
+    }
+    '/product/$slug': {
+      id: '/product/$slug'
+      path: '/product/$slug'
+      fullPath: '/product/$slug'
+      preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog/$category': {
+      id: '/catalog/$category'
+      path: '/$category'
+      fullPath: '/catalog/$category'
+      preLoaderRoute: typeof CatalogCategoryRouteImport
+      parentRoute: typeof CatalogRoute
+    }
   }
 }
 
+interface CatalogRouteChildren {
+  CatalogCategoryRoute: typeof CatalogCategoryRoute
+  CatalogIndexRoute: typeof CatalogIndexRoute
+}
+
+const CatalogRouteChildren: CatalogRouteChildren = {
+  CatalogCategoryRoute: CatalogCategoryRoute,
+  CatalogIndexRoute: CatalogIndexRoute,
+}
+
+const CatalogRouteWithChildren =
+  CatalogRoute._addFileChildren(CatalogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  CartRoute: CartRoute,
+  CatalogRoute: CatalogRouteWithChildren,
+  ContactsRoute: ContactsRoute,
+  DeliveryRoute: DeliveryRoute,
+  OfferRoute: OfferRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
