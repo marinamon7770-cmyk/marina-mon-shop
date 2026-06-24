@@ -102,11 +102,10 @@ function Home() {
           <div className="relative lg:col-span-6">
             <div className="aspect-[4/5] overflow-hidden">
               <img
-                src={heroImg}
+              <img
+                src={heroSrc}
                 alt="Руки мастера плетут корзину"
                 className="h-full w-full object-cover"
-                width={1536}
-                height={1024}
               />
             </div>
             <div className="absolute -bottom-6 -left-6 hidden bg-background p-6 shadow-[var(--shadow-warm)] sm:block lg:-left-12">
