@@ -294,3 +294,111 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
     </div>
   );
 }
+
+type GalleryImage = { id: string; url: string; alt: string | null; sort_order: number };
+
+function GalleryEditor({ productId }: { productId: string }) {
+  const qc = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const imagesQ = useQuery({
+    queryKey: ["product-images", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_images")
+        .select("id, url, alt, sort_order")
+        .eq("product_id", productId)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as GalleryImage[];
+    },
+  });
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const base = imagesQ.data?.length ?? 0;
+    let i = 0;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) { toast.error(`${file.name}: не изображение`); continue; }
+      if (file.size > 8 * 1024 * 1024) { toast.error(`${file.name}: больше 8 МБ`); continue; }
+      try {
+        const url = await uploadToBucket(file, `gallery/${productId}`);
+        const { error } = await supabase.from("product_images").insert({
+          product_id: productId, url, alt: null, sort_order: base + i,
+        });
+        if (error) throw error;
+        i++;
+      } catch (e: any) {
+        toast.error(e?.message ?? "Ошибка загрузки");
+      }
+    }
+    setUploading(false);
+    qc.invalidateQueries({ queryKey: ["product-images", productId] });
+    if (i > 0) toast.success(`Загружено фото: ${i}`);
+  }
+
+  async function removeImage(id: string) {
+    if (!confirm("Удалить фото?")) return;
+    const { error } = await supabase.from("product_images").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["product-images", productId] });
+  }
+
+  async function move(id: string, dir: -1 | 1) {
+    const list = imagesQ.data ?? [];
+    const idx = list.findIndex((x) => x.id === id);
+    const swap = idx + dir;
+    if (idx < 0 || swap < 0 || swap >= list.length) return;
+    const a = list[idx], b = list[swap];
+    await supabase.from("product_images").update({ sort_order: b.sort_order }).eq("id", a.id);
+    await supabase.from("product_images").update({ sort_order: a.sort_order }).eq("id", b.id);
+    qc.invalidateQueries({ queryKey: ["product-images", productId] });
+  }
+
+  return (
+    <div className="space-y-3">
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current?.click()}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-4 py-6 text-center text-xs transition ${
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-secondary/20 hover:border-foreground/40"
+        }`}
+      >
+        <Upload className="h-5 w-5 text-muted-foreground" />
+        <div className="text-muted-foreground">
+          {uploading ? "Загрузка…" : "Перетащите несколько фото или нажмите, чтобы выбрать"}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => { handleFiles(e.target.files); if (inputRef.current) inputRef.current.value = ""; }}
+        />
+      </div>
+
+      {imagesQ.data && imagesQ.data.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {imagesQ.data.map((img, i) => (
+            <div key={img.id} className="group relative border border-border">
+              <img src={img.url} alt="" className="aspect-square w-full object-cover" />
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/90 px-1 py-1 text-[10px]">
+                <button type="button" onClick={() => move(img.id, -1)} disabled={i === 0} className="px-1 disabled:opacity-30">←</button>
+                <button type="button" onClick={() => removeImage(img.id)} className="px-1 text-destructive">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+                <button type="button" onClick={() => move(img.id, 1)} disabled={i === (imagesQ.data?.length ?? 0) - 1} className="px-1 disabled:opacity-30">→</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
