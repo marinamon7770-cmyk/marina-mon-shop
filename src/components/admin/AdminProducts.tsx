@@ -203,3 +203,68 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
     </div>
   );
 }
+
+function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast.error("Можно загрузить только изображение");
+    if (file.size > 8 * 1024 * 1024) return toast.error("Файл больше 8 МБ");
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: file.type,
+    });
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    onChange(data.publicUrl);
+    toast.success("Фото загружено");
+  }
+
+  return (
+    <div className="space-y-3">
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current?.click()}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-4 py-8 text-center text-xs transition ${
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-secondary/20 hover:border-foreground/40"
+        }`}
+      >
+        <Upload className="h-5 w-5 text-muted-foreground" />
+        <div className="text-muted-foreground">
+          {uploading ? "Загрузка…" : "Перетащите фото сюда или нажмите, чтобы выбрать"}
+        </div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70">JPG · PNG · WEBP · до 8 МБ</div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </div>
+      {value && (
+        <div className="flex items-start gap-3">
+          <img src={value} alt="" className="h-24 w-24 border border-border object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="text-xs uppercase tracking-widest text-muted-foreground hover:text-destructive"
+          >
+            Удалить
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
