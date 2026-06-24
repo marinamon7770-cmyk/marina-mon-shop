@@ -122,21 +122,43 @@ function AdminPage() {
           </button>
         </div>
 
+        {(newOrders > 0 || newQuestions > 0) && (
+          <div className="mt-8 flex flex-wrap items-center gap-3 border border-primary/30 bg-primary/5 px-5 py-4 text-sm">
+            <Bell className="h-4 w-4 text-primary" />
+            <span className="font-medium">Новое:</span>
+            {newOrders > 0 && (
+              <button onClick={() => setTab("orders")} className="underline-offset-2 hover:underline">
+                {newOrders} {newOrders === 1 ? "заявка" : newOrders < 5 ? "заявки" : "заявок"}
+              </button>
+            )}
+            {newQuestions > 0 && (
+              <button onClick={() => setTab("questions")} className="underline-offset-2 hover:underline">
+                {newQuestions} {newQuestions === 1 ? "вопрос" : newQuestions < 5 ? "вопроса" : "вопросов"}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="mt-10 flex flex-wrap gap-2 border-b border-border">
           {([
-            ["orders", "Заявки"],
-            ["questions", "Вопросы"],
-            ["products", "Товары"],
-            ["home", "Главная"],
-          ] as [Tab, string][]).map(([k, label]) => (
+            ["orders", "Заявки", newOrders],
+            ["questions", "Вопросы", newQuestions],
+            ["products", "Товары", 0],
+            ["home", "Главная", 0],
+          ] as [Tab, string, number][]).map(([k, label, count]) => (
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`-mb-px border-b-2 px-5 py-3 text-xs uppercase tracking-[0.2em] ${
+              className={`-mb-px inline-flex items-center gap-2 border-b-2 px-5 py-3 text-xs uppercase tracking-[0.2em] ${
                 tab === k ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
+              {count > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                  {count}
+                </span>
+              )}
             </button>
           ))}
         </div>
