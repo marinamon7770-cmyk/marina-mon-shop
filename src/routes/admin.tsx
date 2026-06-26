@@ -161,6 +161,7 @@ function AdminPage() {
           {([
             ["orders", "Заявки", newOrders],
             ["questions", "Вопросы", newQuestions],
+            ["chats", "Чаты", newChats],
             ["products", "Товары", 0],
             ["home", "Главная", 0],
           ] as [Tab, string, number][]).map(([k, label, count]) => (
@@ -184,6 +185,7 @@ function AdminPage() {
         <div className="mt-10">
           {tab === "orders" && <AdminOrders />}
           {tab === "questions" && <AdminQuestions />}
+          {tab === "chats" && <AdminChats />}
           {tab === "products" && <AdminProducts />}
           {tab === "home" && <AdminHome />}
         </div>
