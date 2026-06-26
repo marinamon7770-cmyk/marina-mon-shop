@@ -403,6 +403,53 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          author_name: string
+          created_at: string
+          id: string
+          photo_url: string | null
+          product_id: string | null
+          rating: number
+          source: string
+          status: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          author_name: string
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          product_id?: string | null
+          rating: number
+          source?: string
+          status?: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          product_id?: string | null
+          rating?: number
+          source?: string
+          status?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
           key: string
