@@ -92,6 +92,25 @@ function makeTools(supabase: Awaited<ReturnType<typeof loadAdmin>>, sessionId: s
           .single();
         if (error) return { error: error.message };
         await supabase.from("chat_sessions").update({ has_ticket: true }).eq("id", sessionId);
+        // Telegram notification (best-effort)
+        try {
+          const { data: sess } = await supabase
+            .from("chat_sessions")
+            .select("customer_name, customer_phone")
+            .eq("id", sessionId)
+            .maybeSingle();
+          const tg = await import("@/lib/telegram.server");
+          await tg.sendTelegramMessage(
+            tg.formatChatTicketMessage({
+              customer_name: sess?.customer_name ?? "—",
+              customer_phone: sess?.customer_phone ?? "—",
+              items,
+              notes: notes ?? null,
+            }),
+          );
+        } catch {
+          // ignore
+        }
         return { ok: true, ticket_id: data.id };
       },
     }),
@@ -103,6 +122,23 @@ function makeTools(supabase: Awaited<ReturnType<typeof loadAdmin>>, sessionId: s
       }),
       execute: async ({ reason }) => {
         await supabase.from("chat_sessions").update({ escalated: true }).eq("id", sessionId);
+        try {
+          const { data: sess } = await supabase
+            .from("chat_sessions")
+            .select("customer_name, customer_phone")
+            .eq("id", sessionId)
+            .maybeSingle();
+          const tg = await import("@/lib/telegram.server");
+          await tg.sendTelegramMessage(
+            tg.formatEscalationMessage({
+              customer_name: sess?.customer_name ?? "—",
+              customer_phone: sess?.customer_phone ?? "—",
+              reason,
+            }),
+          );
+        } catch {
+          // ignore
+        }
         return { ok: true, reason };
       },
     }),
