@@ -61,7 +61,7 @@ export function AdminContent() {
             const { error } = await supabase
               .from("site_settings")
               .upsert({ key: f.key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
-            if (error) return toast.error(error.message);
+            if (error) { toast.error(error.message); return; }
             toast.success("Сохранено");
             qc.invalidateQueries({ queryKey: ["site-settings"] });
           }}
