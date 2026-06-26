@@ -61,7 +61,7 @@ async function assertAdmin(context: unknown): Promise<void> {
 export const getTelegramAdminConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context as { supabase: unknown; userId: string } as never);
+    await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const tg = await import("@/lib/telegram.server");
     const { data: row } = await supabaseAdmin
@@ -79,7 +79,7 @@ export const getTelegramAdminConfig = createServerFn({ method: "POST" })
 export const fetchTelegramRecentChats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context as never);
+    await assertAdmin(context);
     const tg = await import("@/lib/telegram.server");
     return { chats: await tg.getRecentChats() };
   });
@@ -90,7 +90,7 @@ export const saveTelegramAdminChatId = createServerFn({ method: "POST" })
     z.object({ chatId: z.string().trim().min(1).max(64) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context as never);
+    await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("admin_settings")
@@ -102,7 +102,7 @@ export const saveTelegramAdminChatId = createServerFn({ method: "POST" })
 export const sendTelegramTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context as never);
+    await assertAdmin(context);
     const tg = await import("@/lib/telegram.server");
     return await tg.sendTelegramMessage(
       "✅ <b>Тест уведомлений</b>\nЕсли вы видите это сообщение — бот настроен корректно.",
