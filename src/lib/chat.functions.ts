@@ -292,11 +292,49 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
     const gateway = createLovableAiGatewayProvider(apiKey);
 
+    // Load knowledge base + content settings to enrich system prompt
+    const { data: kbRows } = await supabase
+      .from("site_settings")
+      .select("key, value")
+      .in("key", ["kb_notes", "kb_qa", "kb_links", "delivery_pickup", "delivery_terms", "delivery_warranty"]);
+    const kb: Record<string, string> = {};
+    (kbRows ?? []).forEach((r: { key: string; value: string | null }) => { if (r.value) kb[r.key] = r.value; });
+
+    const kbSections: string[] = [];
+    if (kb.kb_notes) kbSections.push(`Общая информация о мастерской:\n${kb.kb_notes}`);
+    if (kb.delivery_pickup) kbSections.push(`Самовывоз в Тольятти:\n${kb.delivery_pickup}`);
+    if (kb.delivery_terms) kbSections.push(`Условия заказа:\n${kb.delivery_terms}`);
+    if (kb.delivery_warranty) kbSections.push(`Гарантия и уход:\n${kb.delivery_warranty}`);
+    try {
+      const qa = JSON.parse(kb.kb_qa || "[]") as { q: string; a: string; enabled: boolean }[];
+      const active = qa.filter((x) => x?.enabled && x.q && x.a);
+      if (active.length) {
+        kbSections.push(
+          "Готовые ответы на частые вопросы (используй дословно, если вопрос совпадает по смыслу):\n" +
+            active.map((x, i) => `${i + 1}. В: ${x.q}\n   О: ${x.a}`).join("\n"),
+        );
+      }
+    } catch {}
+    try {
+      const links = JSON.parse(kb.kb_links || "[]") as { title: string; url: string; description?: string }[];
+      const active = links.filter((x) => x?.title && x.url);
+      if (active.length) {
+        kbSections.push(
+          "Полезные ссылки (давай клиенту, когда тема совпадает; пиши URL целиком):\n" +
+            active.map((x) => `- ${x.title} — ${x.url}${x.description ? ` (когда: ${x.description})` : ""}`).join("\n"),
+        );
+      }
+    } catch {}
+
+    const fullSystem = kbSections.length
+      ? `${SYSTEM_PROMPT}\n\n=== БАЗА ЗНАНИЙ МАСТЕРСКОЙ ===\n${kbSections.join("\n\n")}`
+      : SYSTEM_PROMPT;
+
     let assistantText = "";
     try {
       const result = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
-        system: SYSTEM_PROMPT,
+        system: fullSystem,
         messages: modelMessages,
         tools: makeTools(supabase, session.id),
         stopWhen: stepCountIs(50),
