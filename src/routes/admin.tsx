@@ -9,6 +9,7 @@ import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminHome } from "@/components/admin/AdminHome";
+import { AdminChats } from "@/components/admin/AdminChats";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "orders" | "questions" | "products" | "home";
+type Tab = "orders" | "questions" | "chats" | "products" | "home";
 
 function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,6 +29,7 @@ function AdminPage() {
   const [tab, setTab] = useState<Tab>("orders");
   const [newOrders, setNewOrders] = useState(0);
   const [newQuestions, setNewQuestions] = useState(0);
+  const [newChats, setNewChats] = useState(0);
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -51,12 +53,14 @@ function AdminPage() {
   useEffect(() => {
     if (!isAdmin) return;
     const refresh = async () => {
-      const [o, q] = await Promise.all([
+      const [o, q, c] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("questions").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("chat_tickets").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
       setNewOrders(o.count ?? 0);
       setNewQuestions(q.count ?? 0);
+      setNewChats(c.count ?? 0);
       initialized.current = true;
     };
     refresh();
@@ -77,8 +81,22 @@ function AdminPage() {
           toast("Новый вопрос", { description: `${name} задал(а) вопрос`, duration: 10000 });
         }
       })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_tickets" }, () => {
+        setNewChats((n) => n + 1);
+        if (initialized.current) {
+          toast.success("Новая заявка из чата!", { description: "Клиент оформил предварительную заявку через ИИ-помощник", duration: 10000 });
+        }
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_sessions" }, (payload) => {
+        const row = payload.new as { escalated?: boolean };
+        const old = payload.old as { escalated?: boolean };
+        if (initialized.current && row?.escalated && !old?.escalated) {
+          toast("Чат передан оператору", { description: "Клиент в чате запросил живого оператора", duration: 10000 });
+        }
+      })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, refresh)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "questions" }, refresh)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_tickets" }, refresh)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
@@ -143,6 +161,7 @@ function AdminPage() {
           {([
             ["orders", "Заявки", newOrders],
             ["questions", "Вопросы", newQuestions],
+            ["chats", "Чаты", newChats],
             ["products", "Товары", 0],
             ["home", "Главная", 0],
           ] as [Tab, string, number][]).map(([k, label, count]) => (
@@ -166,6 +185,7 @@ function AdminPage() {
         <div className="mt-10">
           {tab === "orders" && <AdminOrders />}
           {tab === "questions" && <AdminQuestions />}
+          {tab === "chats" && <AdminChats />}
           {tab === "products" && <AdminProducts />}
           {tab === "home" && <AdminHome />}
         </div>
