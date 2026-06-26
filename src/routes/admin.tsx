@@ -11,6 +11,7 @@ import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminHome } from "@/components/admin/AdminHome";
 import { AdminChats } from "@/components/admin/AdminChats";
 import { AdminTelegram } from "@/components/admin/AdminTelegram";
+import { AdminReviews } from "@/components/admin/AdminReviews";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "orders" | "questions" | "chats" | "products" | "home" | "telegram";
+type Tab = "orders" | "questions" | "chats" | "reviews" | "products" | "home" | "telegram";
 
 function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -163,6 +164,7 @@ function AdminPage() {
             ["orders", "Заявки", newOrders],
             ["questions", "Вопросы", newQuestions],
             ["chats", "Чаты", newChats],
+            ["reviews", "Отзывы", 0],
             ["products", "Товары", 0],
             ["home", "Главная", 0],
             ["telegram", "Telegram", 0],
@@ -188,6 +190,7 @@ function AdminPage() {
           {tab === "orders" && <AdminOrders />}
           {tab === "questions" && <AdminQuestions />}
           {tab === "chats" && <AdminChats />}
+          {tab === "reviews" && <AdminReviews />}
           {tab === "products" && <AdminProducts />}
           {tab === "home" && <AdminHome />}
           {tab === "telegram" && <AdminTelegram />}

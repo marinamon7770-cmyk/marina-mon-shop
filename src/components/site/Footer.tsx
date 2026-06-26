@@ -18,8 +18,10 @@ export function Footer() {
         <div>
           <div className="tag-label">Навигация</div>
           <ul className="mt-4 space-y-2 text-sm">
+            <li><Link to="/" className="hover:text-primary">Главная</Link></li>
             <li><Link to="/catalog" className="hover:text-primary">Каталог</Link></li>
             <li><Link to="/about" className="hover:text-primary">О мастерской</Link></li>
+            <li><Link to="/reviews" className="hover:text-primary">Отзывы</Link></li>
             <li><Link to="/delivery" className="hover:text-primary">Доставка и оплата</Link></li>
             <li><Link to="/contacts" className="hover:text-primary">Контакты</Link></li>
             <li><Link to="/cart" className="hover:text-primary">Корзина</Link></li>

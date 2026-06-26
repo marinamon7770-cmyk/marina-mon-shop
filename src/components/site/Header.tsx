@@ -7,6 +7,7 @@ import logo from "@/assets/logo.png.asset.json";
 const NAV = [
   { to: "/catalog", label: "Каталог" },
   { to: "/about", label: "Мастерская" },
+  { to: "/reviews", label: "Отзывы" },
   { to: "/delivery", label: "Доставка" },
   { to: "/contacts", label: "Контакты" },
 ] as const;
