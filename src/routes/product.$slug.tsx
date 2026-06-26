@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { QuestionForm } from "@/components/site/QuestionForm";
+import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/lib/cart";
 import { formatPrice, normalizeImageUrl } from "@/lib/format";
@@ -157,7 +158,9 @@ function ProductPage() {
           </div>
         </div>
 
-        <section id="question" className="mt-32 border-t border-border/60 pt-16">
+        <ReviewsSection productId={p.id} />
+
+        <section id="question" className="mt-24 border-t border-border/60 pt-16">
           <p className="tag-label">вопрос об этом изделии</p>
           <h2 className="font-display mt-6 text-3xl sm:text-4xl">Хотите узнать больше?</h2>
           <p className="mt-3 max-w-xl text-muted-foreground">

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ReviewsRouteImport } from './routes/reviews'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OfferRouteImport } from './routes/offer'
 import { Route as DeliveryRouteImport } from './routes/delivery'
@@ -26,6 +27,11 @@ import { Route as CatalogCategoryRouteImport } from './routes/catalog.$category'
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewsRoute = ReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/delivery': typeof DeliveryRoute
   '/offer': typeof OfferRoute
   '/privacy': typeof PrivacyRoute
+  '/reviews': typeof ReviewsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/catalog/$category': typeof CatalogCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/delivery': typeof DeliveryRoute
   '/offer': typeof OfferRoute
   '/privacy': typeof PrivacyRoute
+  '/reviews': typeof ReviewsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/catalog/$category': typeof CatalogCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/delivery': typeof DeliveryRoute
   '/offer': typeof OfferRoute
   '/privacy': typeof PrivacyRoute
+  '/reviews': typeof ReviewsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/catalog/$category': typeof CatalogCategoryRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/delivery'
     | '/offer'
     | '/privacy'
+    | '/reviews'
     | '/sitemap.xml'
     | '/catalog/$category'
     | '/product/$slug'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/delivery'
     | '/offer'
     | '/privacy'
+    | '/reviews'
     | '/sitemap.xml'
     | '/catalog/$category'
     | '/product/$slug'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/delivery'
     | '/offer'
     | '/privacy'
+    | '/reviews'
     | '/sitemap.xml'
     | '/catalog/$category'
     | '/product/$slug'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   DeliveryRoute: typeof DeliveryRoute
   OfferRoute: typeof OfferRoute
   PrivacyRoute: typeof PrivacyRoute
+  ReviewsRoute: typeof ReviewsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
@@ -202,6 +215,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reviews': {
+      id: '/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof ReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -314,6 +334,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeliveryRoute: DeliveryRoute,
   OfferRoute: OfferRoute,
   PrivacyRoute: PrivacyRoute,
+  ReviewsRoute: ReviewsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
