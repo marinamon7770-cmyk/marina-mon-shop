@@ -44,14 +44,18 @@ export const notifyNewQuestion = createServerFn({ method: "POST" })
 
 // --- Admin-only configuration ---
 
-async function assertAdmin(ctx: { supabase: ReturnType<typeof Object>; userId: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = ctx.supabase as any;
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: ctx.userId,
-    _role: "admin",
-  });
-  if (error || !data) throw new Error("Forbidden");
+async function assertAdmin(context: unknown): Promise<void> {
+  const ctx = context as {
+    supabase: { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: unknown }> } } } } };
+    userId: string;
+  };
+  const { data } = await ctx.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden");
 }
 
 export const getTelegramAdminConfig = createServerFn({ method: "POST" })
