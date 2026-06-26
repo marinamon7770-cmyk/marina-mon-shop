@@ -80,10 +80,10 @@ export async function getRecentChats(): Promise<Array<{ chat_id: string; title: 
     if (!chat?.id) continue;
     const id = String(chat.id);
     if (seen.has(id)) continue;
-    const title =
-      chat.title ??
-      [chat.first_name, chat.last_name].filter(Boolean).join(" ") ??
-      chat.username ??
+    const title: string =
+      chat.title ||
+      [chat.first_name, chat.last_name].filter(Boolean).join(" ") ||
+      chat.username ||
       id;
     const from = msg?.from
       ? [msg.from.first_name, msg.from.last_name].filter(Boolean).join(" ") ||
