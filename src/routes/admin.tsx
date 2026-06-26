@@ -53,12 +53,14 @@ function AdminPage() {
   useEffect(() => {
     if (!isAdmin) return;
     const refresh = async () => {
-      const [o, q] = await Promise.all([
+      const [o, q, c] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("questions").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("chat_tickets").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
       setNewOrders(o.count ?? 0);
       setNewQuestions(q.count ?? 0);
+      setNewChats(c.count ?? 0);
       initialized.current = true;
     };
     refresh();
@@ -79,8 +81,22 @@ function AdminPage() {
           toast("Новый вопрос", { description: `${name} задал(а) вопрос`, duration: 10000 });
         }
       })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_tickets" }, () => {
+        setNewChats((n) => n + 1);
+        if (initialized.current) {
+          toast.success("Новая заявка из чата!", { description: "Клиент оформил предварительную заявку через ИИ-помощник", duration: 10000 });
+        }
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_sessions" }, (payload) => {
+        const row = payload.new as { escalated?: boolean };
+        const old = payload.old as { escalated?: boolean };
+        if (initialized.current && row?.escalated && !old?.escalated) {
+          toast("Чат передан оператору", { description: "Клиент в чате запросил живого оператора", duration: 10000 });
+        }
+      })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, refresh)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "questions" }, refresh)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_tickets" }, refresh)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
