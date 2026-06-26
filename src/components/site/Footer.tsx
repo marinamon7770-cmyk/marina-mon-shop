@@ -9,8 +9,7 @@ export function Footer() {
         <div className="lg:col-span-2">
           <div className="font-display text-3xl text-foreground">Марина Моненок</div>
           <p className="mt-3 max-w-md text-sm text-muted-foreground">
-            Мастерская плетёных изделий и кожи. Каждое изделие сплетено и сшито вручную в Тольятти —
-            с заботой о форме, материале и человеке, к которому оно придёт.
+            Мастерская плетёных вещей и кожи. Короба, корзины, сумки и аксессуары — вручную, в Тольятти.
           </p>
           <div className="thread-divider mt-8 w-32" />
         </div>
