@@ -10,6 +10,7 @@ import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminHome } from "@/components/admin/AdminHome";
 import { AdminChats } from "@/components/admin/AdminChats";
+import { AdminTelegram } from "@/components/admin/AdminTelegram";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "orders" | "questions" | "chats" | "products" | "home";
+type Tab = "orders" | "questions" | "chats" | "products" | "home" | "telegram";
 
 function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -164,6 +165,7 @@ function AdminPage() {
             ["chats", "Чаты", newChats],
             ["products", "Товары", 0],
             ["home", "Главная", 0],
+            ["telegram", "Telegram", 0],
           ] as [Tab, string, number][]).map(([k, label, count]) => (
             <button
               key={k}
@@ -188,6 +190,7 @@ function AdminPage() {
           {tab === "chats" && <AdminChats />}
           {tab === "products" && <AdminProducts />}
           {tab === "home" && <AdminHome />}
+          {tab === "telegram" && <AdminTelegram />}
         </div>
       </div>
     </SiteLayout>
