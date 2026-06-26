@@ -96,7 +96,7 @@ export function AdminChats() {
     ])
       .then(([m, t]) => {
         setMessages((m.data ?? []) as Message[]);
-        setTickets((t.data ?? []) as Ticket[]);
+        setTickets((t.data ?? []) as unknown as Ticket[]);
       })
       .finally(() => setLoadingThread(false));
   }, [activeId]);

@@ -9,6 +9,7 @@ import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminHome } from "@/components/admin/AdminHome";
+import { AdminChats } from "@/components/admin/AdminChats";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "orders" | "questions" | "products" | "home";
+type Tab = "orders" | "questions" | "chats" | "products" | "home";
 
 function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,6 +29,7 @@ function AdminPage() {
   const [tab, setTab] = useState<Tab>("orders");
   const [newOrders, setNewOrders] = useState(0);
   const [newQuestions, setNewQuestions] = useState(0);
+  const [newChats, setNewChats] = useState(0);
   const initialized = useRef(false);
 
   useEffect(() => {
