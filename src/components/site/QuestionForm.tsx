@@ -68,12 +68,12 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <Field name="name" label="Как к вам обращаться" required />
-        <Field name="phone" label="Телефон" type="tel" />
+        <Field name="phone" label="Телефон или Telegram" type="tel" required />
       </div>
-      <Field name="email" label="Email (по желанию)" type="email" />
+      <Field name="email" label="E-mail — если удобно" type="email" />
       <div>
         <label className="mb-1.5 block text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Ваш вопрос<span className="text-primary">*</span>
+          Что хотите сделать?<span className="text-primary">*</span>
         </label>
         <textarea
           name="message"
@@ -81,11 +81,7 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
           rows={5}
           maxLength={5000}
           className="w-full border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground"
-          placeholder={
-            productSlug
-              ? "Расскажите, что хотите узнать об этом изделии"
-              : "Опишите, о чём вы хотели бы спросить"
-          }
+          placeholder="Например: нужен короб на полку 32 × 28 × 20 см, в светлом оттенке."
         />
       </div>
       <button
@@ -93,7 +89,7 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
         disabled={sending}
         className="w-full bg-primary px-6 py-4 text-sm uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60 sm:w-auto"
       >
-        {sending ? "Отправляем…" : "Отправить сообщение"}
+        {sending ? "Отправляем…" : "Обсудить изделие"}
       </button>
     </form>
   );
