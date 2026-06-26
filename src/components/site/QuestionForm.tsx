@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyNewQuestion } from "@/lib/telegram.functions";
 
 export function QuestionForm({ productSlug, compact = false }: { productSlug?: string; compact?: boolean }) {
   const [sending, setSending] = useState(false);
@@ -37,11 +38,14 @@ export function QuestionForm({ productSlug, compact = false }: { productSlug?: s
       return;
     }
     setSending(true);
-    const { error } = await supabase.from("questions").insert(payload);
+    const { data: inserted, error } = await supabase.from("questions").insert(payload).select("id").single();
     setSending(false);
     if (error) {
       toast.error("Не удалось отправить. Попробуйте ещё раз.");
       return;
+    }
+    if (inserted?.id) {
+      notifyNewQuestion({ data: { questionId: inserted.id } }).catch(() => {});
     }
     toast.success("Спасибо! Марина свяжется с вами в ближайшее время.");
     setDone(true);

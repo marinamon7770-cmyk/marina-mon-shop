@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/site/PageHeader";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyNewOrder } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -64,6 +65,8 @@ function CartPage() {
     } else {
       toast.success("Заказ отправлен! Марина свяжется с вами в ближайшее время.");
     }
+    // Fire-and-forget Telegram notification for the admin
+    notifyNewOrder({ data: { orderId: order.id } }).catch(() => {});
     cart.clear();
     navigate({ to: "/" });
   }
