@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type RefObject } from "react";
 import { vkOrderUrl } from "./calculatorConfig";
 import {
   calculateEstimate,
@@ -29,10 +29,87 @@ const inputClass =
 
 const labelClass = "mb-1.5 block text-xs uppercase tracking-[0.2em] text-muted-foreground";
 
+type SizeField = "diameter" | "length" | "width" | "side" | "height";
+
 function parsePositive(value: string): number | null {
   const n = Number(value.replace(",", "."));
   if (!Number.isFinite(n) || n <= 0) return null;
   return n;
+}
+
+function buildCalculatorInput(
+  shape: BasketShape,
+  diameter: string,
+  length: string,
+  width: string,
+  side: string,
+  height: string,
+  bottomPattern: PatternType,
+  wallPattern: PatternType,
+  bottomType: BottomType,
+): Parameters<typeof calculateEstimate>[0] | null {
+  const h = parsePositive(height);
+  if (h === null) return null;
+
+  const input = {
+    shape,
+    height: h,
+    bottomPattern,
+    wallPattern,
+    bottomType,
+  } as Parameters<typeof calculateEstimate>[0];
+
+  switch (shape) {
+    case "circle": {
+      const d = parsePositive(diameter);
+      if (d === null) return null;
+      input.diameter = d;
+      break;
+    }
+    case "oval":
+    case "rectangle": {
+      const l = parsePositive(length);
+      const w = parsePositive(width);
+      if (l === null || w === null) return null;
+      input.length = l;
+      input.width = w;
+      break;
+    }
+    case "square": {
+      const s = parsePositive(side);
+      if (s === null) return null;
+      input.side = s;
+      break;
+    }
+  }
+
+  return input;
+}
+
+function getFirstMissingField(
+  shape: BasketShape,
+  diameter: string,
+  length: string,
+  width: string,
+  side: string,
+  height: string,
+): SizeField | null {
+  switch (shape) {
+    case "circle":
+      if (!diameter.trim() || parsePositive(diameter) === null) return "diameter";
+      if (!height.trim() || parsePositive(height) === null) return "height";
+      return null;
+    case "oval":
+    case "rectangle":
+      if (!length.trim() || parsePositive(length) === null) return "length";
+      if (!width.trim() || parsePositive(width) === null) return "width";
+      if (!height.trim() || parsePositive(height) === null) return "height";
+      return null;
+    case "square":
+      if (!side.trim() || parsePositive(side) === null) return "side";
+      if (!height.trim() || parsePositive(height) === null) return "height";
+      return null;
+  }
 }
 
 export function CalculatorForm() {
@@ -45,6 +122,24 @@ export function CalculatorForm() {
   const [bottomPattern, setBottomPattern] = useState<PatternType>("sitc");
   const [wallPattern, setWallPattern] = useState<PatternType>("sitc");
   const [bottomType, setBottomType] = useState<BottomType>("woven");
+  const [highlightedField, setHighlightedField] = useState<SizeField | null>(null);
+  const [ctaMessage, setCtaMessage] = useState<string | null>(null);
+  const [resultPulse, setResultPulse] = useState(false);
+
+  const resultCardRef = useRef<HTMLDivElement>(null);
+  const diameterRef = useRef<HTMLInputElement>(null);
+  const lengthRef = useRef<HTMLInputElement>(null);
+  const widthRef = useRef<HTMLInputElement>(null);
+  const sideRef = useRef<HTMLInputElement>(null);
+  const heightRef = useRef<HTMLInputElement>(null);
+
+  const fieldRefs: Record<SizeField, RefObject<HTMLInputElement | null>> = {
+    diameter: diameterRef,
+    length: lengthRef,
+    width: widthRef,
+    side: sideRef,
+    height: heightRef,
+  };
 
   const validationError = useMemo(() => {
     const h = parsePositive(height);
@@ -76,42 +171,18 @@ export function CalculatorForm() {
 
   const result = useMemo(() => {
     if (validationError) return null;
-
-    const h = parsePositive(height);
-    if (h === null) return null;
-
-    const input = {
+    const input = buildCalculatorInput(
       shape,
-      height: h,
+      diameter,
+      length,
+      width,
+      side,
+      height,
       bottomPattern,
       wallPattern,
       bottomType,
-    } as Parameters<typeof calculateEstimate>[0];
-
-    switch (shape) {
-      case "circle": {
-        const d = parsePositive(diameter);
-        if (d === null) return null;
-        input.diameter = d;
-        break;
-      }
-      case "oval":
-      case "rectangle": {
-        const l = parsePositive(length);
-        const w = parsePositive(width);
-        if (l === null || w === null) return null;
-        input.length = l;
-        input.width = w;
-        break;
-      }
-      case "square": {
-        const s = parsePositive(side);
-        if (s === null) return null;
-        input.side = s;
-        break;
-      }
-    }
-
+    );
+    if (!input) return null;
     return calculateEstimate(input);
   }, [
     shape,
@@ -128,6 +199,31 @@ export function CalculatorForm() {
 
   const isPlywood = bottomType === "plywood";
   const showWidth = shape === "oval" || shape === "rectangle";
+
+  function clearFieldHighlight(field: SizeField) {
+    setHighlightedField((current) => (current === field ? null : current));
+    setCtaMessage(null);
+  }
+
+  function handleCalculateClick() {
+    const missing = getFirstMissingField(shape, diameter, length, width, side, height);
+    if (missing) {
+      setHighlightedField(missing);
+      setCtaMessage("Укажите размеры изделия, чтобы увидеть стоимость.");
+      const target = fieldRefs[missing].current;
+      target?.focus();
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (validationError) return;
+
+    setHighlightedField(null);
+    setCtaMessage(null);
+    setResultPulse(true);
+    resultCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => setResultPulse(false), 1600);
+  }
 
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
@@ -163,25 +259,70 @@ export function CalculatorForm() {
             <Field
               label="Диаметр, см"
               value={diameter}
-              onChange={setDiameter}
+              onChange={(v) => {
+                setDiameter(v);
+                clearFieldHighlight("diameter");
+              }}
               required
+              inputRef={diameterRef}
+              highlighted={highlightedField === "diameter"}
             />
           )}
 
           {(shape === "oval" || shape === "rectangle") && (
             <>
-              <Field label="Длина, см" value={length} onChange={setLength} required />
+              <Field
+                label="Длина, см"
+                value={length}
+                onChange={(v) => {
+                  setLength(v);
+                  clearFieldHighlight("length");
+                }}
+                required
+                inputRef={lengthRef}
+                highlighted={highlightedField === "length"}
+              />
               {showWidth && (
-                <Field label="Ширина, см" value={width} onChange={setWidth} required />
+                <Field
+                  label="Ширина, см"
+                  value={width}
+                  onChange={(v) => {
+                    setWidth(v);
+                    clearFieldHighlight("width");
+                  }}
+                  required
+                  inputRef={widthRef}
+                  highlighted={highlightedField === "width"}
+                />
               )}
             </>
           )}
 
           {shape === "square" && (
-            <Field label="Сторона, см" value={side} onChange={setSide} required />
+            <Field
+              label="Сторона, см"
+              value={side}
+              onChange={(v) => {
+                setSide(v);
+                clearFieldHighlight("side");
+              }}
+              required
+              inputRef={sideRef}
+              highlighted={highlightedField === "side"}
+            />
           )}
 
-          <Field label="Высота, см" value={height} onChange={setHeight} required />
+          <Field
+            label="Высота, см"
+            value={height}
+            onChange={(v) => {
+              setHeight(v);
+              clearFieldHighlight("height");
+            }}
+            required
+            inputRef={heightRef}
+            highlighted={highlightedField === "height"}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -207,15 +348,39 @@ export function CalculatorForm() {
           />
         </div>
 
-        {validationError && (
+        <div className="space-y-3 pt-1">
+          <button
+            type="button"
+            onClick={handleCalculateClick}
+            className="flex min-h-14 w-full items-center justify-center bg-primary px-5 py-4 text-base leading-snug font-medium text-primary-foreground shadow-[0_4px_16px_rgba(102,2,16,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[oklch(0.33_0.14_22)] hover:shadow-[0_6px_20px_rgba(102,2,16,0.28)] sm:text-lg"
+          >
+            Рассчитать стоимость корзины или короба
+          </button>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Калькулятор для круглых, овальных, квадратных и прямоугольных плетёных корзин и
+            коробов.
+          </p>
+          <p className="text-xs leading-relaxed text-muted-foreground/80">
+            Стоимость обновляется автоматически после заполнения размеров.
+          </p>
+        </div>
+
+        {(ctaMessage || validationError) && (
           <p className="text-sm text-primary" role="alert">
-            {validationError}
+            {ctaMessage ?? validationError}
           </p>
         )}
       </div>
 
       <div className="flex flex-col gap-6">
-        <div className="flex flex-1 flex-col justify-center bg-sage/90 p-8 text-center text-white sm:p-10">
+        <div
+          ref={resultCardRef}
+          className={`flex flex-1 flex-col justify-center bg-sage/90 p-8 text-center text-white transition-all duration-500 sm:p-10 ${
+            resultPulse
+              ? "scale-[1.02] shadow-[0_0_0_4px_rgba(255,255,255,0.45),0_8px_28px_rgba(47,47,47,0.18)]"
+              : "shadow-none"
+          }`}
+        >
           <p className="text-xs uppercase tracking-[0.25em] text-white/80">
             Ориентировочная стоимость
           </p>
@@ -254,11 +419,15 @@ function Field({
   value,
   onChange,
   required,
+  inputRef,
+  highlighted,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   required?: boolean;
+  inputRef?: RefObject<HTMLInputElement | null>;
+  highlighted?: boolean;
 }) {
   return (
     <div>
@@ -267,11 +436,16 @@ function Field({
         {required && <span className="text-primary"> *</span>}
       </label>
       <input
+        ref={inputRef}
         type="text"
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
+        className={`${inputClass} ${
+          highlighted
+            ? "border-primary ring-2 ring-primary/30 bg-primary/[0.03]"
+            : ""
+        }`}
         placeholder="0"
       />
     </div>
