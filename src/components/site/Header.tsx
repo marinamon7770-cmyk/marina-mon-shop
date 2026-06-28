@@ -6,6 +6,7 @@ import logo from "@/assets/logo.png.asset.json";
 
 const NAV = [
   { to: "/catalog", label: "Каталог" },
+  { to: "/calculator", label: "Рассчитать стоимость" },
   { to: "/about", label: "Мастерская" },
   { to: "/reviews", label: "Отзывы" },
   { to: "/delivery", label: "Доставка" },
