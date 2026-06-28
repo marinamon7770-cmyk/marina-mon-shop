@@ -92,6 +92,12 @@ function Home() {
               >
                 Посмотреть изделия <ArrowRight className="h-4 w-4" />
               </Link>
+              <Link
+                to="/calculator"
+                className="inline-flex items-center gap-3 border border-foreground/25 px-7 py-4 text-sm uppercase tracking-[0.22em] text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                Рассчитать стоимость
+              </Link>
               <a
                 href="#contact"
                 className="text-sm uppercase tracking-[0.22em] text-foreground underline-offset-8 hover:underline"

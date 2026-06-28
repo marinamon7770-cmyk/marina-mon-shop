@@ -19,7 +19,7 @@ export function Footer() {
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/" className="hover:text-primary">Главная</Link></li>
             <li><Link to="/catalog" className="hover:text-primary">Каталог</Link></li>
-            <li><Link to="/calculator" className="hover:text-primary">Рассчитать стоимость</Link></li>
+            <li><Link to="/calculator" className="hover:text-primary">Калькулятор</Link></li>
             <li><Link to="/about" className="hover:text-primary">О мастерской</Link></li>
             <li><Link to="/reviews" className="hover:text-primary">Отзывы</Link></li>
             <li><Link to="/delivery" className="hover:text-primary">Доставка и оплата</Link></li>

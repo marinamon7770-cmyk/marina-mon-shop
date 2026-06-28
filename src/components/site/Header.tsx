@@ -6,7 +6,7 @@ import logo from "@/assets/logo.png.asset.json";
 
 const NAV = [
   { to: "/catalog", label: "Каталог" },
-  { to: "/calculator", label: "Рассчитать стоимость" },
+  { to: "/calculator", label: "Калькулятор" },
   { to: "/about", label: "Мастерская" },
   { to: "/reviews", label: "Отзывы" },
   { to: "/delivery", label: "Доставка" },
@@ -30,7 +30,7 @@ export function Header() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-6 xl:gap-8 md:flex">
           {NAV.map((item) => (
             <Link
               key={item.to}
@@ -60,7 +60,7 @@ export function Header() {
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-label="Меню"
-            className="inline-flex items-center justify-center border border-foreground/20 p-2 lg:hidden"
+            className="inline-flex items-center justify-center border border-foreground/20 p-2 md:hidden"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -68,7 +68,7 @@ export function Header() {
       </div>
 
       {open && (
-        <nav className="border-t border-border/60 bg-background lg:hidden">
+        <nav className="border-t border-border/60 bg-background md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col px-6 py-4">
             {NAV.map((item) => (
               <Link
