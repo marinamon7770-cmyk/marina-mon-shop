@@ -85,25 +85,22 @@ function Home() {
               Плету из бумажной лозы, шью из натуральной кожи. Делаю готовые вещи и изделия на заказ —
               по вашим размерам, в нужном оттенке и с продуманными деталями.
             </p>
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-3 bg-primary px-7 py-4 text-sm uppercase tracking-[0.22em] text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Посмотреть изделия <ArrowRight className="h-4 w-4" />
-              </Link>
+            <div className="mt-10 flex w-full flex-col gap-3">
               <Link
                 to="/calculator"
-                className="inline-flex items-center gap-3 border border-foreground/25 px-7 py-4 text-sm uppercase tracking-[0.22em] text-foreground transition-colors hover:border-primary hover:text-primary"
+                className="inline-flex w-full items-center justify-center gap-3 bg-primary px-7 py-4 text-sm uppercase tracking-[0.22em] text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Рассчитать стоимость
+                Рассчитать корзину или короб <ArrowRight className="h-4 w-4" />
               </Link>
-              <a
-                href="#contact"
-                className="text-sm uppercase tracking-[0.22em] text-foreground underline-offset-8 hover:underline"
+              <Link
+                to="/catalog"
+                className="inline-flex w-full items-center justify-center gap-3 border border-foreground/25 px-7 py-4 text-sm uppercase tracking-[0.22em] text-foreground transition-colors hover:border-primary hover:text-primary"
               >
-                Заказать по своим размерам
-              </a>
+                Посмотреть готовые изделия <ArrowRight className="h-4 w-4" />
+              </Link>
+              <p className="pt-1 text-sm leading-relaxed text-muted-foreground">
+                Калькулятор для круглых, овальных, квадратных и прямоугольных плетёных корзин и коробов.
+              </p>
             </div>
           </div>
 
